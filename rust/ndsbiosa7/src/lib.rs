@@ -22,53 +22,53 @@ use core::intrinsics::transmute;
 #[instruction_set(arm::t32)]
 #[no_mangle]
 pub unsafe extern "C" fn Blowfish_Decrypt64 (
-    key: *const u32,
+    key: *mut u32,
     l: *mut u32,
     r: *mut u32
 ) {
     let mut lderef: u32 = *l;
     let mut rderef: u32 = *r;
     let mut round_count: i32 = 0x11;
-    let mut tmp1: u32;
+    let mut word_in_flight: *mut u32;
 
     while {
-        tmp1 = *key.offset(round_count as isize) ^ lderef;
+        word_in_flight = (key.offset(round_count as isize) as u32 ^ lderef) as *mut u32;
         lderef = Blowfish_FeistelRound(
-            transmute::<*const u32, i32>(key),
-            tmp1);
+            key,
+            word_in_flight);
         lderef = lderef ^ rderef;
         round_count -= 1;
-        rderef = tmp1;
+        rderef = word_in_flight as u32;
 
         1 < round_count
     } {}
 
     rderef = *key.offset(1);
-    *l = *key.offset(0) ^ tmp1;
+    *l = *key ^ word_in_flight as u32;
     *r = rderef ^ lderef;
 }
 
 #[instruction_set(arm::t32)]
 #[no_mangle]
 pub unsafe extern "C" fn Blowfish_FeistelRound (
-    keyarea: i32,
-    word_in_flight: u32
+    keyarea: *mut u32,
+    word_in_flight: *mut u32
 ) -> u32 {
-    let zero_shift: *const i32 = transmute::<u32, *const i32>(
-        (word_in_flight & 0xFF) * 4 + keyarea as u32 + 0xC48
+    let zero_shift: *const u32 = transmute(
+        (word_in_flight as u32 & 0xFF) * 4 + keyarea as u32 + 0xC48
     );
-    let eight_shift: *const i32 = transmute::<u32, *const i32>(
-        (word_in_flight >> 8 & 0xFF) * 4 + keyarea as u32 + 0x848
+    let eight_shift: *const u32 = transmute(
+        (word_in_flight as u32 >> 8 & 0xFF) * 4 + keyarea as u32 + 0x848
     );
     // Note that in the original binary, there is an interesting
     // obfuscation here: x * 4 is replaced by (x << 0x18) >> 0x16
     // Should we match this?
-    let sixteen_shift: *const i32 = transmute::<u32, *const i32>(
-        (word_in_flight >> 16) * 4 + keyarea as u32 + 0x448
+    let sixteen_shift: *const u32 = transmute(
+        (word_in_flight as u32 >> 16) * 4 + keyarea as u32 + 0x448
     );
-    let twenty_four_shift: *const i32 = transmute::<u32, *const i32>(
-        (word_in_flight >> 24) * 4 + keyarea as u32 + 0x48
+    let twenty_four_shift: *const u32 = transmute(
+        (word_in_flight as u32 >> 24) * 4 + keyarea as u32 + 0x48
     );
     
-    (*zero_shift + (*eight_shift ^ *twenty_four_shift + *sixteen_shift)) as u32
+    *zero_shift + (*eight_shift ^ *twenty_four_shift + *sixteen_shift)
 }
