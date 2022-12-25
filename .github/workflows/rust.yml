@@ -22,7 +22,11 @@ jobs:
         toolchain: nightly
         override: true
         components: rust-src
-        
+
+    - name: Install binutils-arm-none-eabi
+      run: |
+        sudo apt-get install -y binutils-arm-none-eabi
+
     - name: Build ARM7 BIOS
       working-directory: ./rust/ndsbiosa7
       run: cargo build --release
@@ -32,4 +36,4 @@ jobs:
       with:
         name: arm7bios
         path: |
-          ./rust/ndsbiosa7/target/armv4t-none-eabi/release/*.rlib
+          ./rust/ndsbiosa7/target/armv4t-none-eabi/release/ndsbiosa7
