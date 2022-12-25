@@ -1,0 +1,27 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Rust nightly
+      uses: actions-rs/toolchain@1
+      with:
+        toolchain: nightly
+        override: true
+        
+    - name: Build ARM7 library
+      working-directory: ./rust/ndsbiosa7
+      run: cargo build
