@@ -21,6 +21,7 @@ jobs:
       with:
         toolchain: nightly
         override: true
+        components: rust-src
         
     - name: Build ARM7 library
       working-directory: ./rust/ndsbiosa7
