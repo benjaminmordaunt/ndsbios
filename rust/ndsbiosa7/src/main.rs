@@ -2,8 +2,7 @@
  *     The OpenNitro Project
  */
 #![no_std]
-
-use core::intrinsics::transmute;
+#![no_main]
 
 // (from 20BCh in arm7bios)
 // Decrypt a single 64-bit word using the
@@ -54,21 +53,26 @@ pub unsafe extern "C" fn Blowfish_FeistelRound (
     keyarea: *mut u32,
     word_in_flight: *mut u32
 ) -> u32 {
-    let zero_shift: *const u32 = transmute(
+    let zero_shift: *const u32 = (
         (word_in_flight as u32 & 0xFF) * 4 + keyarea as u32 + 0xC48
-    );
-    let eight_shift: *const u32 = transmute(
+    ) as *const u32;
+    let eight_shift: *const u32 = (
         (word_in_flight as u32 >> 8 & 0xFF) * 4 + keyarea as u32 + 0x848
-    );
+    ) as *const u32;
     // Note that in the original binary, there is an interesting
     // obfuscation here: x * 4 is replaced by (x << 0x18) >> 0x16
     // Should we match this?
-    let sixteen_shift: *const u32 = transmute(
+    let sixteen_shift: *const u32 = (
         (word_in_flight as u32 >> 16) * 4 + keyarea as u32 + 0x448
-    );
-    let twenty_four_shift: *const u32 = transmute(
+    ) as *const u32;
+    let twenty_four_shift: *const u32 = (
         (word_in_flight as u32 >> 24) * 4 + keyarea as u32 + 0x48
-    );
+    ) as *const u32;
     
     *zero_shift + (*eight_shift ^ *twenty_four_shift + *sixteen_shift)
+}
+
+#[panic_handler]
+fn null_panic(_info: &core::panic::PanicInfo) -> ! {
+    loop {}
 }
