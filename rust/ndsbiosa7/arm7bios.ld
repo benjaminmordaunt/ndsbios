@@ -9,6 +9,8 @@ MEMORY {
 SECTIONS {
 	.text :
 	{
+		. = 0x00001164;
+		KEEP(*(.text.BiosSafeShim));
 		. = 0x00001FB4;
 		KEEP(*(.text.Blowfish_FeistelRound));
 		. = 0x000020BC;

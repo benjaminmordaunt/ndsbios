@@ -3,6 +3,10 @@
  */
 #![no_std]
 #![no_main]
+#![feature(link_llvm_intrinsics)]
+#![feature(naked_functions)]
+
+use core::arch::asm;
 
 // (from 20BCh in arm7bios)
 // Decrypt a single 64-bit word using the
@@ -70,6 +74,26 @@ pub unsafe extern "C" fn Blowfish_FeistelRound (
     ) as *const u32;
     
     *zero_shift + (*eight_shift ^ *twenty_four_shift + *sixteen_shift)
+}
+
+// A safety shim executed before BIOS functions to ensure the caller
+// originates from a legal call site. This is so low level that I'm
+// not even going to attempt to do this in anything other than asm.
+#[naked]
+#[no_mangle]
+pub unsafe extern "C" fn BiosSafeShim () {
+    asm!(
+        "tst lr, #0xff000000",
+        "bxeq ip",
+        "mov ip, #0",
+        "mov r3, #0",
+        "mov r2, #0",
+        "mov r1, #0",
+        "mov r0, #0", 
+        "mov lr, #4",
+        "bx lr",
+        options(noreturn)
+    );
 }
 
 #[panic_handler]
