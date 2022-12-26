@@ -93,11 +93,15 @@ pub unsafe extern "C" fn CpuFastCopy (
     // If this particular bit is set in the size field, instead of performing a copy,
     // just set all words in the destination range with src[0].
     if ((size >> 0x18) & 1) != 0 {
-       for elem in dst_slice {
-           *elem = *src;
-       }
+        for elem in dst_slice {
+            *elem = *src;
+        }
     } else {
-       dst_slice.copy_from_slice(&src_slice); 
+        // NOTE: Not using dst_slice.copy_from_slice(&src_slice) here as it would produce a memcpy
+        // call.
+        for elem in core::iter::zip(dst_slice, src_slice) {
+            *elem.0 = *elem.1;
+        }
     }
 }
 
