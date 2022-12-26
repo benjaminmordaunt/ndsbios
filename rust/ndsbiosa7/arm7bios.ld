@@ -19,6 +19,10 @@ SECTIONS {
 		KEEP(*(.rodata .rodata.*));
 		. = ALIGN(4096);
 	} > BIOS =0
-	
+
+	/DISCARD/ :
+	{
+		*(*)
+	}
 }
 
