@@ -38,4 +38,4 @@ jobs:
       with:
         name: arm7bios
         path: |
-          ./ndsbiosa7.bin
+          ./rust/ndsbiosa7/ndsbiosa7.bin
