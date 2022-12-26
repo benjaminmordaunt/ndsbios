@@ -97,7 +97,7 @@ pub unsafe extern "C" fn CpuFastCopy (
            *elem = *src;
        }
     } else {
-       dst_slice.clone_from_slice(&src_slice); 
+       dst_slice.copy_from_slice(&src_slice); 
     }
 }
 

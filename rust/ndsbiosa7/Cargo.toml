@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [profile.release]
-opt-level = 'z'
-lto = true
+opt-level = 3
 codegen-units = 1
 panic = 'abort'
+lto = true
 strip = true
 
 [dependencies]
