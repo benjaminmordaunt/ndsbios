@@ -88,7 +88,7 @@ pub unsafe extern "C" fn CpuFastCopy (
     size: u32
 ) {
     let dst_slice = core::slice::from_raw_parts_mut(dst, size as usize);
-    let src_slice = core::slice::from_raw_parts_mut(dst, size as usize);
+    let src_slice = core::slice::from_raw_parts_mut(src, size as usize);
 
     // If this particular bit is set in the size field, instead of performing a copy,
     // just set all words in the destination range with src[0].
