@@ -76,6 +76,32 @@ pub unsafe extern "C" fn Blowfish_FeistelRound (
     *zero_shift + (*eight_shift ^ *twenty_four_shift + *sixteen_shift)
 }
 
+// (from 30e4h in arm7bios)
+// Simply copy data from src to dat. The original function operated "quickly"
+// (using the ldmlt and stmlt opcodes) on 8 * u32 chunks (256-bits), then copied
+// any remainder "slowly" (using mov). With the privilege of modern compilers, we
+// shouldn't have to worry about such meta-programming.
+#[no_mangle]
+pub unsafe extern "C" fn CpuFastCopy (
+    src: *const u32,
+    dst: *mut u32,
+    size: u32
+) {
+    let dst_slice = core::slice::from_raw_parts_mut(dst, size as usize);
+    let src_slice = core::slice::from_raw_parts_mut(dst, size as usize);
+
+    // If this particular bit is set in the size field, instead of performing a copy,
+    // just set all words in the destination range with src[0].
+    if ((size >> 0x18) & 1) != 0 {
+       for elem in dst_slice {
+           *elem = *src;
+       }
+    } else {
+       dst_slice.clone_from_slice(&src_slice); 
+    }
+}
+
+// (from 1164h in arm7bios) 
 // A safety shim executed before BIOS functions to ensure the caller
 // originates from a legal call site. This is so low level that I'm
 // not even going to attempt to do this in anything other than asm.
