@@ -29,11 +29,13 @@ jobs:
 
     - name: Build ARM7 BIOS
       working-directory: ./rust/ndsbiosa7
-      run: cargo build --release
+      run: |
+        cargo build --release
+        arm-none-eabi-objcopy -O binary ./rust/ndsbiosa7/target/armv4t-none-eabi/release/ndsbiosa7 ndsbiosa7.bin
       
     - name: Archive release ARM7 BIOS
       uses: actions/upload-artifact@v3
       with:
         name: arm7bios
         path: |
-          ./rust/ndsbiosa7/target/armv4t-none-eabi/release/ndsbiosa7
+          ./ndsbiosa7.bin
