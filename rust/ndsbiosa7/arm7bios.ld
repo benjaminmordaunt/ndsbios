@@ -1,3 +1,7 @@
+/* Cannot change output format to "binary" at this point.
+ * Instead, generate a "corrupt" ELF (no header area) and convert
+ * using arm-none-eabi-objcopy -O binary ndsbiosa7 ndsbiosa7.bin
+
 MEMORY {
 	BIOS (RWX) : ORIGIN = 0x00000000, LENGTH = 0x4000
 }
