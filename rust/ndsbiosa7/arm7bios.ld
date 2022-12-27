@@ -17,6 +17,7 @@ SECTIONS {
 		KEEP(*(.text.Blowfish_Decrypt64));
 		. = 0x000030E4;
 		KEEP(*(.text.CpuFastCopy));
+		*(.text.*);
 	} > BIOS =0
 
 	/* Need to figure out exactly where to put

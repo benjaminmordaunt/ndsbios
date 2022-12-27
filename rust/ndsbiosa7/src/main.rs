@@ -3,6 +3,7 @@
  */
 #![no_std]
 #![no_main]
+#![no_builtins]
 #![feature(link_llvm_intrinsics)]
 #![feature(naked_functions)]
 
@@ -97,11 +98,7 @@ pub unsafe extern "C" fn CpuFastCopy (
             *elem = *src;
         }
     } else {
-        // NOTE: Not using dst_slice.copy_from_slice(&src_slice) here as it would produce a memcpy
-        // call.
-        for elem in core::iter::zip(dst_slice, src_slice) {
-            *elem.0 = *elem.1;
-        }
+        dst_slice.copy_from_slice(&src_slice);
     }
 }
 
