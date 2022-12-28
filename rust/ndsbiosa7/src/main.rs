@@ -102,6 +102,53 @@ pub unsafe extern "C" fn CpuFastCopy (
     }
 }
 
+// --- BEGIN ULTRA-LOW LEVEL ---
+// Functions which are to be implemented in raw assembly,
+// because they e.g. communicate with CP15, manipulate system
+// registers or do similarly strange things.
+
+// (from 2d78h in arm7bios)
+// This function serves two main purposes:
+// 1) Set up the Saved Program State Registers (SPSR)
+//    so that the processor is ready to handle exceptions
+//    in both the Supervisor and IRQ modes, with valid stack
+//    pointers. Stack bases:
+//     - Supervisor: 0x380ffdc
+//     - IRQ:        0x380ffb0
+//     - System:     0x380ff00
+// 2) Zero 200h bytes between 0x3FFFE00..0x4000000 ... for some reason.
+#[naked]
+#[no_mangle]
+pub unsafe extern "C" fn InitARM7Stacks() {
+    asm!(
+        ".code 32",             // start out in arm mode
+        "mov r0, #0xd3",        // enter supervisor mode
+        "msr cpsr_fsxc, r0",    // ...
+        "ldr sp, =0x00002e34", // set stack ptr for this mode
+        "mov lr, #0",
+        "msr spsr_fsxc, lr",
+        "mov r0, 0xd2",
+        "msr cpsr_fsxc, r0",
+        "ldr sp, =0x00002e30",
+        "mov lr, #0",
+        "msr spsr_fsxc, lr",
+        "mov r0, 0x5f",
+        "msr cpsr_fsxc, r0",
+        "ldr sp, =0x00002e2c",
+        "mov r4, #0x4000000",
+        "add r0, pc, #1",
+        "bx r0",
+        ".code 16",            // switch to thumb mode
+        "movs r0, #0",
+        "ldr r1, [pc, #0x104]",
+        "0: str r0, [r4, r1]",
+        "adds r1, #4",
+        "blt.n 0",
+        "bx lr",
+        options(noreturn)
+    );
+}
+
 // (from 1164h in arm7bios) 
 // A safety shim executed before BIOS functions to ensure the caller
 // originates from a legal call site. This is so low level that I'm
