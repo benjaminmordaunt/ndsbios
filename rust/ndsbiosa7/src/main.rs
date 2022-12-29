@@ -9,6 +9,8 @@
 
 use core::arch::asm;
 
+const IPCSYNC: u32 = 0x04000180;
+
 // (from 20BCh in arm7bios)
 // Decrypt a single 64-bit word using the
 // Blowfish algorithm (also known as KEY1).
@@ -102,6 +104,19 @@ pub unsafe extern "C" fn CpuFastCopy (
     }
 }
 
+// (from 1204h in arm7bios)
+// Synchronises the ARM7 core with the ARM9 core. The ARM7
+// core receives IPC data from the ARM9 core through IPCSYNC[0..3].
+// This is not the high-bandwidth IPC FIFO (at 4000188h-4100000h), and is
+// used only to send synchronizing control codes.
+// However, calls to this particular check function always have IPCSYNC[3]=0.
+#[no_mangle]
+pub unsafe extern "C" fn IPCWait(wait_for: u32) {
+    while {
+        (IPCSYNC as *mut u32).read_volatile() & 15u32 != wait_for
+    } {}
+}
+
 // --- BEGIN ULTRA-LOW LEVEL ---
 // Functions which are to be implemented in raw assembly,
 // because they e.g. communicate with CP15, manipulate system
@@ -124,26 +139,26 @@ pub unsafe extern "C" fn InitARM7Stacks() {
         ".code 32",             // start out in arm mode
         "mov r0, #0xd3",        // enter supervisor mode
         "msr cpsr_fsxc, r0",    // ...
-        "ldr sp, =0x00002e34", // set stack ptr for this mode
-        "mov lr, #0",
-        "msr spsr_fsxc, lr",
-        "mov r0, 0xd2",
-        "msr cpsr_fsxc, r0",
-        "ldr sp, =0x00002e30",
-        "mov lr, #0",
-        "msr spsr_fsxc, lr",
-        "mov r0, 0x5f",
-        "msr cpsr_fsxc, r0",
-        "ldr sp, =0x00002e2c",
-        "mov r4, #0x4000000",
-        "add r0, pc, #1",
-        "bx r0",
-        ".code 16",            // switch to thumb mode
-        "movs r0, #0",
-        "ldr r1, [pc, #0x104]",
-        "0: str r0, [r4, r1]",
-        "adds r1, #4",
-        "blt.n 0",
+        "ldr sp, =0x00002e34",  // set stack ptr for this mode
+        "mov lr, #0",           // ...
+        "msr spsr_fsxc, lr",    // ...
+        "mov r0, 0xd2",         // enter IRQ mode
+        "msr cpsr_fsxc, r0",    // ...
+        "ldr sp, =0x00002e30",  // set stack ptr for this mode
+        "mov lr, #0",           // ...
+        "msr spsr_fsxc, lr",    // ...
+        "mov r0, 0x5f",         // switch back to system mode
+        "msr cpsr_fsxc, r0",    // ...
+        "ldr sp, =0x00002e2c",  // set up a stack for system mode
+        "mov r4, #0x4000000",   // load up base addr of irq control bank
+        "add r0, pc, #1",       // offset pc by 1 to transition to thumb mode
+        "bx r0",                // do a thumb-transitioning branch
+        ".code 16",             // switch to outputting in thumb mode
+        "movs r0, #0",          // use a zero to clear...    
+        "ldr r1, [pc, #0x104]", // 200h 32-bit words...
+        "0: str r0, [r4, r1]",  // going from 3FFFE00h to 4000000h...
+        "adds r1, #4",          // move onto next word
+        "blt.n 0",              // once we hit 4000000h, move on.
         "bx lr",
         options(noreturn)
     );

@@ -11,6 +11,8 @@ SECTIONS {
 	{
 		. = 0x00001164;
 		KEEP(*(.text.BiosSafeShim));
+		. = 0x00001204;
+		KEEP(*(.text.IPCWait));
 		. = 0x00001FB4;
 		KEEP(*(.text.Blowfish_FeistelRound));
 		. = 0x000020BC;
