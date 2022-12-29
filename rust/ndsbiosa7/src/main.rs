@@ -114,7 +114,7 @@ pub unsafe extern "C" fn CpuFastCopy (
 #[no_mangle]
 pub unsafe extern "C" fn IPCWait(wait_for: u32) {
     while {
-        (IPCSYNC as *mut u32).read_volatile() & 15u32 != wait_for
+        (IPCSYNC as *mut u16).read_volatile() as u32 & 15u32 != wait_for
     } {}
 }
 
