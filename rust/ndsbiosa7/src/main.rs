@@ -110,6 +110,7 @@ pub unsafe extern "C" fn CpuFastCopy (
 // This is not the high-bandwidth IPC FIFO (at 4000188h-4100000h), and is
 // used only to send synchronizing control codes.
 // However, calls to this particular check function always have IPCSYNC[3]=0.
+#[instruction_set(arm::t32)]
 #[no_mangle]
 pub unsafe extern "C" fn IPCWait(wait_for: u32) {
     while {
