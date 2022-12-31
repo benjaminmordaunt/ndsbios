@@ -81,9 +81,8 @@ pub unsafe extern "C" fn Blowfish_Decrypt64 (
         1 < round_count
     } {}
 
-    rderef = *key.offset(1);
-    *l = *key ^ word_in_flight as u32;
-    *r = rderef ^ lderef;
+    *l = *key ^ rderef;
+    *r = *key.offset(1) ^ lderef;
 }
 
 #[instruction_set(arm::t32)]
