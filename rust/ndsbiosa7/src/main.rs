@@ -22,25 +22,23 @@ pub unsafe extern "C" fn Blowfish_Encrypt64 (
     l: *mut u32,
     r: *mut u32
 ) {
-    let mut lderef: u32 = *l;
-    let mut rderef: u32 = *r;
     let mut round_count: i32 = 0;
     let mut word_in_flight: *mut u32;
 
     while {
-        word_in_flight = (key.offset(round_count as isize) as u32 ^ lderef) as *mut u32;
-        lderef = Blowfish_FeistelRound(
+        word_in_flight = (key.offset(round_count as isize) as u32 ^ *l) as *mut u32;
+        *l = Blowfish_FeistelRound(
             key, 
             word_in_flight);
-        lderef = lderef & rderef;
+        *l = *l ^ *r;
         round_count += 1;
-        rderef = word_in_flight as u32;
+        *r = word_in_flight as u32;
 
         round_count < 0x10
     } {}
 
-    *l = *key.offset(0x11) ^ rderef;
-    *r = *key.offset(0x10) ^ lderef;
+    *l = *key.offset(0x11) ^ *r;
+    *r = *key.offset(0x10) ^ *l;
 }
 
 // (from 20BCh in arm7bios)
@@ -64,25 +62,23 @@ pub unsafe extern "C" fn Blowfish_Decrypt64 (
     l: *mut u32,
     r: *mut u32
 ) {
-    let mut lderef: u32 = *l;
-    let mut rderef: u32 = *r;
     let mut round_count: i32 = 0x11;
     let mut word_in_flight: *mut u32;
 
     while {
-        word_in_flight = (key.offset(round_count as isize) as u32 ^ lderef) as *mut u32;
-        lderef = Blowfish_FeistelRound(
+        word_in_flight = (key.offset(round_count as isize) as u32 ^ *l) as *mut u32;
+        *l = Blowfish_FeistelRound(
             key,
             word_in_flight);
-        lderef = lderef ^ rderef;
+        *l = *l ^ *r;
         round_count -= 1;
-        rderef = word_in_flight as u32;
+        *r = word_in_flight as u32;
 
         1 < round_count
     } {}
 
-    *l = *key ^ rderef;
-    *r = *key.offset(1) ^ lderef;
+    *l = *key ^ *r;
+    *r = *key.offset(1) ^ *l;
 }
 
 #[instruction_set(arm::t32)]
