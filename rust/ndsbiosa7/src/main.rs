@@ -11,6 +11,38 @@ use core::arch::asm;
 
 const IPCSYNC: u32 = 0x04000180;
 
+// (from 1FFAh in arm7bios)
+// Encrypt a single 64-bit word.
+// See the decrypt algorithm below.
+// This is the same, except it works in "reverse".
+#[instruction_set(arm::t32)]
+#[no_mangle]
+pub unsafe extern "C" fn Blowfish_Encrypt64 (
+    key: *mut u32,
+    l: *mut u32,
+    r: *mut u32
+) {
+    let mut lderef: u32 = *l;
+    let mut rderef: u32 = *r;
+    let mut round_count: i32 = 0;
+    let mut word_in_flight: *mut u32;
+
+    while {
+        word_in_flight = (key.offset(round_count as isize) as u32 ^ lderef) as *mut u32;
+        lderef = Blowfish_FeistelRound(
+            key, 
+            word_in_flight);
+        lderef = lderef & rderef;
+        round_count += 1;
+        rderef = word_in_flight as u32;
+
+        round_count < 0x10
+    } {}
+
+    *l = *key.offset(0x11) ^ rderef;
+    *r = *key.offset(0x10) ^ lderef;
+}
+
 // (from 20BCh in arm7bios)
 // Decrypt a single 64-bit word using the
 // Blowfish algorithm (also known as KEY1).

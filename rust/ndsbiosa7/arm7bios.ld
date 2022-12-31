@@ -15,6 +15,8 @@ SECTIONS {
 		KEEP(*(.text.IPCWait));
 		. = 0x00001FB4;
 		KEEP(*(.text.Blowfish_FeistelRound));
+		. = 0x00001FFA;
+		KEEP(*(.text.Blowfish_Encrypt64));
 		. = 0x000020BC;
 		KEEP(*(.text.Blowfish_Decrypt64));
 		. = 0x00002D78;
